@@ -1,0 +1,17 @@
+SHOPIFY_STORE=your-store.myshopify.com
+SHOPIFY_ACCESS_TOKEN=shpat_xxxxxxxxxxxxx
+
+# Rivo Merchant API Key (without "Bearer" prefix - direct key only)
+RIVO_API_KEY=your_rivo_merchant_api_key
+
+# Email Configuration (SMTP)
+# For Gmail: smtp.gmail.com, port 587, secure=false (use App Password, not regular password)
+# For Outlook: smtp-mail.outlook.com, port 587, secure=false
+# For custom SMTP: Use your provider's settings
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_SECURE=false
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-app-password
+EMAIL_FROM_NAME=Rivo Loyalty
+
