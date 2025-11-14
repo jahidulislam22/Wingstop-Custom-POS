@@ -293,6 +293,8 @@ app.post('/redeem-points', async (req, res) => {
 app.post('/notify-point-redemption', async (req, res) => {
   try {
     console.log('Webhook received from Rivo');
+    console.log('Webhook headers x-forwarded-for:', req.headers['x-forwarded-for'] || 'n/a');
+    console.log('Webhook body keys:', Object.keys(req.body || {}));
 
     const email = req.body.customer?.email;
     const firstName = req.body.customer?.first_name || '';
@@ -303,7 +305,17 @@ app.post('/notify-point-redemption', async (req, res) => {
     const rewardName = req.body.name;
     const rewardCode = req.body.code;
 
+    console.log('Parsed webhook values:', {
+      email,
+      customerName,
+      pointsRedeemed,
+      pointsRemaining,
+      rewardName,
+      hasRewardCode: !!rewardCode
+    });
+
     if (!email || !pointsRedeemed || pointsRemaining === undefined || !rewardName) {
+      console.warn('Webhook missing required fields; refusing to send email');
       return res.status(400).json({
         success: false,
         error: 'Missing required fields from Rivo webhook'
@@ -311,7 +323,11 @@ app.post('/notify-point-redemption', async (req, res) => {
     }
 
     if (!emailTransporter) {
-      console.error('Email not configured');
+      console.error('Email not configured', {
+        hasHost: !!config.EMAIL_HOST,
+        hasUser: !!config.EMAIL_USER,
+        hasPass: !!config.EMAIL_PASS
+      });
       return res.status(500).json({
         success: false,
         error: 'Email service not configured'
@@ -378,9 +394,20 @@ app.post('/notify-point-redemption', async (req, res) => {
         Thank you!
       `
     };
+
+    console.log('Attempting to send email with options:', {
+      from: mailOptions.from,
+      to: mailOptions.to,
+      subject: mailOptions.subject,
+      htmlLength: mailOptions.html?.length || 0
+    });
     
     const info = await emailTransporter.sendMail(mailOptions);
-    console.log('Email sent successfully');
+    console.log('Email sent successfully', {
+      messageId: info?.messageId,
+      accepted: info?.accepted,
+      rejected: info?.rejected
+    });
     
     res.json({
       success: true,
@@ -397,7 +424,11 @@ app.post('/notify-point-redemption', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error sending notification:', error);
+    console.error('Error sending notification:', {
+      message: error?.message,
+      code: error?.code,
+      response: error?.response
+    });
     res.status(500).json({
       success: false,
       error: error.message
