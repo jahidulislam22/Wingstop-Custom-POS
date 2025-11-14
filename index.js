@@ -111,6 +111,21 @@ app.get('/', (req, res) => {
   });
 });
 
+app.get('/health', (req, res) => {
+  const healthcheck = {
+    uptime: process.uptime(),
+    message: 'OK',
+    timestamp: Date.now(),
+    environment: process.env.NODE_ENV || 'development',
+    configured: {
+      shopify: !!(config.SHOPIFY_STORE && config.SHOPIFY_ACCESS_TOKEN),
+      rivo: !!config.RIVO_API_KEY,
+      email: !!(config.EMAIL_HOST && config.EMAIL_USER && config.EMAIL_PASS)
+    }
+  };
+  res.status(200).json(healthcheck);
+});
+
 app.get('/customers', async (req, res) => {
   try {
     const response = await rivoAPI('customers');

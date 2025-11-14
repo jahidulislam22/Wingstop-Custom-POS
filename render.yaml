@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: rivo-middleware-backend
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      # Add these in Render Dashboard (Settings > Environment):
+      # SHOPIFY_STORE
+      # SHOPIFY_ACCESS_TOKEN
+      # RIVO_API_KEY
+      # EMAIL_HOST
+      # EMAIL_PORT
+      # EMAIL_SECURE
+      # EMAIL_USER
+      # EMAIL_PASS
+      # EMAIL_FROM_NAME
+

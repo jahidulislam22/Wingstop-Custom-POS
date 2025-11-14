@@ -18,7 +18,8 @@ function App() {
   const fetchRewards = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/rewards');
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${API_URL}/rewards`);
       const data = await response.json();
       
       if (data.success && data.rewards) {
@@ -64,7 +65,8 @@ function App() {
     setRedemptionResult(null);
 
     try {
-      const response = await fetch('http://localhost:5000/redeem-points', {
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${API_URL}/redeem-points`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
