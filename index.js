@@ -302,8 +302,22 @@ app.post('/notify-point-redemption', async (req, res) => {
     const customerName = `${firstName} ${lastName}`.trim() || 'Valued Customer';
     const pointsRedeemed = req.body.points_amount;
     const pointsRemaining = req.body.customer?.points_tally;
-    const rewardName = req.body.name;
-    const rewardCode = req.body.code;
+    const eventAttributes = req.body.event_attributes || {};
+    const rewardName =
+      req.body.name ||
+      req.body.title ||
+      eventAttributes.name ||
+      eventAttributes.reward_name ||
+      eventAttributes.title ||
+      null;
+    const rewardCode =
+      req.body.code ||
+      eventAttributes.code ||
+      eventAttributes.discount_code ||
+      eventAttributes.reward_code ||
+      null;
+
+    console.log('event_attributes keys:', Object.keys(eventAttributes));
 
     console.log('Parsed webhook values:', {
       email,
@@ -314,7 +328,7 @@ app.post('/notify-point-redemption', async (req, res) => {
       hasRewardCode: !!rewardCode
     });
 
-    if (!email || !pointsRedeemed || pointsRemaining === undefined || !rewardName) {
+    if (!email || !pointsRedeemed || pointsRemaining === undefined) {
       console.warn('Webhook missing required fields; refusing to send email');
       return res.status(400).json({
         success: false,
@@ -417,7 +431,7 @@ app.post('/notify-point-redemption', async (req, res) => {
         customerName,
         pointsRedeemed,
         pointsRemaining,
-        rewardName,
+        rewardName: rewardName || 'Reward',
         rewardCode,
         messageId: info.messageId,
         timestamp: new Date().toISOString()
