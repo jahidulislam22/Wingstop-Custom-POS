@@ -42,12 +42,24 @@ if (config.EMAIL_HOST && config.EMAIL_USER && config.EMAIL_PASS) {
     host: config.EMAIL_HOST,
     port: parseInt(config.EMAIL_PORT) || 587,
     secure: config.EMAIL_SECURE === 'true',
+    // Helpful timeouts so we don't hang silently
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 20000,
+    logger: true,
+    debug: true,
     auth: {
       user: config.EMAIL_USER,
       pass: config.EMAIL_PASS
-    }
+    },
+    tls: { minVersion: 'TLSv1.2' }
   });
-  console.log('Email transporter configured');
+  console.log('Email transporter configured', {
+    host: config.EMAIL_HOST,
+    port: parseInt(config.EMAIL_PORT) || 587,
+    secure: config.EMAIL_SECURE === 'true',
+    hasUser: !!config.EMAIL_USER
+  });
 }
 
 const shopifyAPI = async (query, variables = {}) => {
@@ -415,12 +427,30 @@ app.post('/notify-point-redemption', async (req, res) => {
       subject: mailOptions.subject,
       htmlLength: mailOptions.html?.length || 0
     });
-    
+
+    // Verify connection right before send to surface auth/connection issues
+    try {
+      console.time('smtp-verify');
+      await emailTransporter.verify();
+      console.timeEnd('smtp-verify');
+      console.log('SMTP verify success');
+    } catch (verifyErr) {
+      console.error('SMTP verify failed', {
+        message: verifyErr?.message,
+        code: verifyErr?.code,
+        command: verifyErr?.command,
+        response: verifyErr?.response
+      });
+    }
+
+    console.time('smtp-sendMail');
     const info = await emailTransporter.sendMail(mailOptions);
+    console.timeEnd('smtp-sendMail');
     console.log('Email sent successfully', {
       messageId: info?.messageId,
       accepted: info?.accepted,
-      rejected: info?.rejected
+      rejected: info?.rejected,
+      response: info?.response
     });
     
     res.json({
