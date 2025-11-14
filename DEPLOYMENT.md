@@ -20,12 +20,19 @@
    SHOPIFY_STORE=your-store.myshopify.com
    SHOPIFY_ACCESS_TOKEN=shpat_xxxxxxxxxxxxx
    RIVO_API_KEY=your_rivo_merchant_api_key
+
+   # Choose ONE email approach:
+   # (A) SMTP
    EMAIL_HOST=smtp.gmail.com
-   EMAIL_PORT=587
-   EMAIL_SECURE=false
+   EMAIL_PORT=465
+   EMAIL_SECURE=true
    EMAIL_USER=your-email@gmail.com
    EMAIL_PASS=your-app-password
    EMAIL_FROM_NAME=Rivo Loyalty
+
+   # (B) Resend (no SMTP needed)
+   RESEND_API_KEY=re_****************************
+   RESEND_FROM=no-reply@yourdomain.com   # or use onboarding@resend.dev for testing
    ```
 
 6. **Deploy & Copy Backend URL**
@@ -95,6 +102,7 @@ Then redeploy backend.
 - Check Render logs in dashboard
 - Verify all environment variables are set
 - Test `/health` endpoint
+  - `configured.email` is true if SMTP OR Resend is configured
 
 ### Frontend Issues
 - Verify `REACT_APP_API_URL` is set correctly

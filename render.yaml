@@ -17,10 +17,15 @@ services:
       # SHOPIFY_STORE
       # SHOPIFY_ACCESS_TOKEN
       # RIVO_API_KEY
+      # For email (choose ONE approach):
+      # - SMTP:
       # EMAIL_HOST
       # EMAIL_PORT
       # EMAIL_SECURE
       # EMAIL_USER
       # EMAIL_PASS
       # EMAIL_FROM_NAME
+      # - Resend (no SMTP needed):
+      # RESEND_API_KEY
+      # RESEND_FROM  # e.g. no-reply@yourdomain.com (or use onboarding@resend.dev for testing)
 
