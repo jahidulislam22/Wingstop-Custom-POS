@@ -1,5 +1,0 @@
-order_id,customer_email,customer_name,product,quantity,price,points_earned
-POS001,john@example.com,John Doe,Classic Wings,2,19.99,20
-POS002,jane@example.com,Jane Smith,Boneless Wings,1,15.99,16
-POS003,john@example.com,John Doe,Wing Combo,1,24.99,25
-
