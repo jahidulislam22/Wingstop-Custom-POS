@@ -67,6 +67,20 @@ Try redeeming points to verify everything works.
 
 ## 🔧 Troubleshooting
 
+### Build Command Error ("npm" is invalid)
+If you see error `Running build command 'npm'... npm <command>`:
+1. Go to Render Dashboard → Your Service → Settings
+2. Scroll to "Build & Deploy" section
+3. Set **Build Command** to: `npm install`
+4. Set **Start Command** to: `node index.js`
+5. Click "Save Changes"
+6. Go to "Manual Deploy" and click "Deploy latest commit"
+
+**Alternative**: Use Blueprint deployment which reads `render.yaml` automatically:
+1. Delete the existing service in Render
+2. Click "New +" → "Blueprint"
+3. Connect repository and Render will use `render.yaml` settings
+
 ### CORS Errors
 If frontend can't connect to backend, update `index.js` line 9:
 ```javascript
