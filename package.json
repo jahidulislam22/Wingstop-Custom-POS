@@ -1,0 +1,43 @@
+{
+  "name": "wingstop-pos-middleware",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "import": "node import.local.js",
+    "export": "node export.local.js",
+    "build": "echo 'Backend ready for Vercel deployment'",
+    "vercel-build": "echo 'Building for Vercel'",
+    "postinstall": "test -n \"$VERCEL\" || husky install"
+  },
+  "description": "Dead simple CSV-based middleware to sync POS orders to Shopify and Rivo loyalty system.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EcomExperts-io/Rivo-Middleware.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/EcomExperts-io/Rivo-Middleware/issues"
+  },
+  "homepage": "https://github.com/EcomExperts-io/Rivo-Middleware#readme",
+  "devDependencies": {
+    "@shopify/eslint-plugin": "^50.0.0",
+    "@shopify/prettier-plugin-liquid": "^1.10.0",
+    "eslint": "^9.39.1",
+    "husky": "^8.0.0",
+    "prettier": "^3.6.2",
+    "nodemon": "^3.1.11"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "nodemailer": "^7.0.10"
+  },
+  "engines": {
+    "node": "22.x"
+  }
+}
