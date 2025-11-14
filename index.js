@@ -10,18 +10,31 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-let config = {};
+// Load configuration from process.env with optional .env fallback for local dev.
+let fileEnv = {};
 try {
-  config = Object.fromEntries(
+  fileEnv = Object.fromEntries(
     readFileSync('.env', 'utf8')
       .split('\n')
       .filter(l => l && !l.startsWith('#'))
       .map(l => l.split('=').map(s => s.trim()))
   );
-  console.log('Configuration loaded successfully');
+  console.log('Loaded .env configuration file');
 } catch (err) {
-  console.error('Warning: .env file not found');
+  console.log('No .env file found; using environment variables');
 }
+
+const config = {
+  SHOPIFY_STORE: process.env.SHOPIFY_STORE || fileEnv.SHOPIFY_STORE,
+  SHOPIFY_ACCESS_TOKEN: process.env.SHOPIFY_ACCESS_TOKEN || fileEnv.SHOPIFY_ACCESS_TOKEN,
+  RIVO_API_KEY: process.env.RIVO_API_KEY || fileEnv.RIVO_API_KEY,
+  EMAIL_HOST: process.env.EMAIL_HOST || fileEnv.EMAIL_HOST,
+  EMAIL_PORT: process.env.EMAIL_PORT || fileEnv.EMAIL_PORT,
+  EMAIL_SECURE: process.env.EMAIL_SECURE || fileEnv.EMAIL_SECURE,
+  EMAIL_USER: process.env.EMAIL_USER || fileEnv.EMAIL_USER,
+  EMAIL_PASS: process.env.EMAIL_PASS || fileEnv.EMAIL_PASS,
+  EMAIL_FROM_NAME: process.env.EMAIL_FROM_NAME || fileEnv.EMAIL_FROM_NAME
+};
 
 let emailTransporter = null;
 if (config.EMAIL_HOST && config.EMAIL_USER && config.EMAIL_PASS) {
