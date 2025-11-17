@@ -366,6 +366,109 @@
   box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
 }
 
+.email-input-group {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.email-input-wrapper {
+  flex: 1;
+}
+
+.check-points-btn {
+  padding: 16px 24px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.check-points-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.check-points-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.customer-points-card {
+  margin-top: 16px;
+  padding: 20px;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-radius: 8px;
+  border: 2px solid #2563eb;
+  animation: slideIn 0.3s ease;
+}
+
+.customer-points-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid rgba(37, 99, 235, 0.2);
+}
+
+.customer-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.vip-badge {
+  background: #2563eb;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.points-display {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.points-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.points-label {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.points-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #2563eb;
+  line-height: 1;
+}
+
+.credits-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #2563eb;
+}
+
 @media (max-width: 640px) {
   .pos-container {
     padding: 30px 20px;
@@ -389,6 +492,24 @@
   }
 
   .success-screen h2 {
+    font-size: 24px;
+  }
+
+  .email-input-group {
+    flex-direction: column;
+  }
+
+  .check-points-btn {
+    width: 100%;
+  }
+
+  .customer-points-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .points-value {
     font-size: 24px;
   }
 }

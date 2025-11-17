@@ -1,6 +1,5 @@
 import express from 'express';
 import { readFileSync } from 'fs';
-import nodemailer from 'nodemailer';
 import cors from 'cors';
 
 const app = express();
@@ -30,39 +29,10 @@ const config = {
   RIVO_API_KEY: process.env.RIVO_API_KEY || fileEnv.RIVO_API_KEY,
   RESEND_API_KEY: process.env.RESEND_API_KEY || fileEnv.RESEND_API_KEY,
   RESEND_FROM: process.env.RESEND_FROM || fileEnv.RESEND_FROM,
-  EMAIL_HOST: process.env.EMAIL_HOST || fileEnv.EMAIL_HOST,
-  EMAIL_PORT: process.env.EMAIL_PORT || fileEnv.EMAIL_PORT,
-  EMAIL_SECURE: process.env.EMAIL_SECURE || fileEnv.EMAIL_SECURE,
-  EMAIL_USER: process.env.EMAIL_USER || fileEnv.EMAIL_USER,
-  EMAIL_PASS: process.env.EMAIL_PASS || fileEnv.EMAIL_PASS,
   EMAIL_FROM_NAME: process.env.EMAIL_FROM_NAME || fileEnv.EMAIL_FROM_NAME
 };
 
-let emailTransporter = null;
-if (config.EMAIL_HOST && config.EMAIL_USER && config.EMAIL_PASS) {
-  emailTransporter = nodemailer.createTransport({
-    host: config.EMAIL_HOST,
-    port: parseInt(config.EMAIL_PORT) || 587,
-    secure: config.EMAIL_SECURE === 'true',
-    // Helpful timeouts so we don't hang silently
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 20000,
-    logger: true,
-    debug: true,
-    auth: {
-      user: config.EMAIL_USER,
-      pass: config.EMAIL_PASS
-    },
-    tls: { minVersion: 'TLSv1.2' }
-  });
-  console.log('Email transporter configured', {
-    host: config.EMAIL_HOST,
-    port: parseInt(config.EMAIL_PORT) || 587,
-    secure: config.EMAIL_SECURE === 'true',
-    hasUser: !!config.EMAIL_USER
-  });
-}
+// SMTP removed; using Resend API only
 
 const shopifyAPI = async (query, variables = {}) => {
   try {
@@ -147,7 +117,7 @@ app.get('/health', (req, res) => {
     configured: {
       shopify: !!(config.SHOPIFY_STORE && config.SHOPIFY_ACCESS_TOKEN),
       rivo: !!config.RIVO_API_KEY,
-      email: !!((config.EMAIL_HOST && config.EMAIL_USER && config.EMAIL_PASS) || config.RESEND_API_KEY)
+      email: !!config.RESEND_API_KEY
     }
   };
   res.status(200).json(healthcheck);
@@ -329,8 +299,6 @@ app.post('/redeem-points', async (req, res) => {
 app.post('/notify-point-redemption', async (req, res) => {
   try {
     console.log('Webhook received from Rivo');
-    console.log('Webhook headers x-forwarded-for:', req.headers['x-forwarded-for'] || 'n/a');
-    console.log('Webhook body keys:', Object.keys(req.body || {}));
 
     const email = req.body.customer?.email;
     const firstName = req.body.customer?.first_name || '';
@@ -353,32 +321,14 @@ app.post('/notify-point-redemption', async (req, res) => {
       eventAttributes.reward_code ||
       null;
 
-    console.log('event_attributes keys:', Object.keys(eventAttributes));
-
-    console.log('Parsed webhook values:', {
-      email,
-      customerName,
-      pointsRedeemed,
-      pointsRemaining,
-      rewardName,
-      hasRewardCode: !!rewardCode
-    });
-
     if (!email || !pointsRedeemed || pointsRemaining === undefined) {
-      console.warn('Webhook missing required fields; refusing to send email');
       return res.status(400).json({
         success: false,
         error: 'Missing required fields from Rivo webhook'
       });
     }
 
-    if (!emailTransporter && !config.RESEND_API_KEY) {
-      console.error('Email not configured', {
-        hasHost: !!config.EMAIL_HOST,
-        hasUser: !!config.EMAIL_USER,
-        hasPass: !!config.EMAIL_PASS,
-        hasResend: !!config.RESEND_API_KEY
-      });
+    if (!config.RESEND_API_KEY) {
       return res.status(500).json({
         success: false,
         error: 'Email service not configured'
@@ -443,87 +393,27 @@ app.post('/notify-point-redemption', async (req, res) => {
       `;
 
     // Prefer Resend if configured (no SMTP). Otherwise fall back to SMTP.
-    if (config.RESEND_API_KEY) {
-      const resendFrom = `${config.EMAIL_FROM_NAME || 'Rivo Loyalty'} <${config.RESEND_FROM || 'onboarding@resend.dev'}>`;
-      console.log('Attempting Resend send with options:', {
-        from: resendFrom, to: email, subject, htmlLength: html.length
-      });
-      console.time('resend-send');
-      const resendResp = await sendEmailViaResend({ from: resendFrom, to: email, subject, html, text });
-      console.timeEnd('resend-send');
-      console.log('Email sent successfully (Resend)', resendResp);
+    const resendFrom = `${config.EMAIL_FROM_NAME || 'Rivo Loyalty'} <${config.RESEND_FROM || 'onboarding@resend.dev'}>`;
+    const resendResp = await sendEmailViaResend({ from: resendFrom, to: email, subject, html, text });
+    console.log(`Email sent via Resend to ${email}`, { messageId: resendResp?.id || null });
 
-      return res.json({
-        success: true,
-        message: 'Email sent successfully',
-        data: {
-          email,
-          customerName,
-          pointsRedeemed,
-          pointsRemaining,
-          rewardName: rewardName || 'Reward',
-          rewardCode,
-          messageId: resendResp.id || null,
-          timestamp: new Date().toISOString(),
-          provider: 'resend'
-        }
-      });
-    } else if (emailTransporter) {
-      const mailOptions = {
-        from: `"${config.EMAIL_FROM_NAME || 'Rivo Loyalty'}" <${config.EMAIL_USER}>`,
-        to: email,
-        subject,
-        html,
-        text
-      };
-
-      console.log('Attempting SMTP send with options:', {
-        from: mailOptions.from, to: mailOptions.to, subject: mailOptions.subject, htmlLength: html.length
-      });
-
-      try {
-        console.time('smtp-verify');
-        await emailTransporter.verify();
-        console.timeEnd('smtp-verify');
-        console.log('SMTP verify success');
-      } catch (verifyErr) {
-        console.error('SMTP verify failed', {
-          message: verifyErr?.message, code: verifyErr?.code, command: verifyErr?.command, response: verifyErr?.response
-        });
+    return res.json({
+      success: true,
+      message: 'Email sent successfully',
+      data: {
+        email,
+        customerName,
+        pointsRedeemed,
+        pointsRemaining,
+        rewardName: rewardName || 'Reward',
+        rewardCode,
+        messageId: resendResp.id || null,
+        timestamp: new Date().toISOString(),
+        provider: 'resend'
       }
-
-      console.time('smtp-sendMail');
-      const info = await emailTransporter.sendMail(mailOptions);
-      console.timeEnd('smtp-sendMail');
-      console.log('Email sent successfully (SMTP)', {
-        messageId: info?.messageId, accepted: info?.accepted, rejected: info?.rejected, response: info?.response
-      });
-
-      return res.json({
-        success: true,
-        message: 'Email sent successfully',
-        data: {
-          email,
-          customerName,
-          pointsRedeemed,
-          pointsRemaining,
-          rewardName: rewardName || 'Reward',
-          rewardCode,
-          messageId: info.messageId,
-          timestamp: new Date().toISOString(),
-          provider: 'smtp'
-        }
-      });
-    }
-
-    // No provider configured
-    return res.status(500).json({ success: false, error: 'No email provider configured' });
-  } catch (error) {
-    console.error('Error sending notification:', {
-      message: error?.message,
-      code: error?.code,
-      response: error?.response
     });
+  } catch (error) {
+    console.error('Email send failed', { to: req?.body?.customer?.email, error: error?.message || String(error) });
     res.status(500).json({
       success: false,
       error: error.message

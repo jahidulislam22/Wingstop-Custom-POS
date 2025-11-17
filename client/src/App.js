@@ -10,6 +10,8 @@ function App() {
   const [message, setMessage] = useState(null);
   const [error, setError] = useState(null);
   const [redemptionResult, setRedemptionResult] = useState(null);
+  const [customerPoints, setCustomerPoints] = useState(null);
+  const [loadingPoints, setLoadingPoints] = useState(false);
 
   useEffect(() => {
     fetchRewards();
@@ -43,12 +45,47 @@ function App() {
     }
   };
 
+  const fetchCustomerPoints = async (email) => {
+    if (!email || !email.includes('@')) {
+      setCustomerPoints(null);
+      return;
+    }
+
+    try {
+      setLoadingPoints(true);
+      setError(null);
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${API_URL}/points/${encodeURIComponent(email)}`);
+      const data = await response.json();
+      
+      if (data.success && data.customer) {
+        setCustomerPoints({
+          points: data.customer.data?.attributes?.points_tally || 0,
+          credits: data.customer.data?.attributes?.credits_tally || 0,
+          firstName: data.customer.data?.attributes?.first_name || '',
+          lastName: data.customer.data?.attributes?.last_name || '',
+          vipTier: data.customer.data?.attributes?.vip_tier?.name || null
+        });
+      } else {
+        setCustomerPoints(null);
+        setError('Customer not found or no points data available');
+      }
+    } catch (err) {
+      console.error('Error fetching customer points:', err);
+      setCustomerPoints(null);
+      setError('Failed to fetch customer points');
+    } finally {
+      setLoadingPoints(false);
+    }
+  };
+
   const resetForm = () => {
     setCustomerEmail('');
     setSelectedReward(null);
     setRedemptionResult(null);
     setMessage(null);
     setError(null);
+    setCustomerPoints(null);
   };
 
   const handleSubmit = async (e) => {
@@ -186,14 +223,55 @@ function App() {
         <form onSubmit={handleSubmit} className="pos-form">
           <div className="form-section">
             <label className="form-label">Customer Email</label>
-            <input
-              type="email"
-              placeholder="customer@example.com"
-              value={customerEmail}
-              onChange={(e) => setCustomerEmail(e.target.value)}
-              className="pos-input"
-              required
-            />
+            <div className="email-input-group">
+              <div className="email-input-wrapper">
+                <input
+                  type="email"
+                  placeholder="customer@example.com"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  className="pos-input"
+                  required
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => fetchCustomerPoints(customerEmail)}
+                className="check-points-btn"
+                disabled={loadingPoints || !customerEmail}
+              >
+                {loadingPoints ? '...' : 'Check Points'}
+              </button>
+            </div>
+            {customerPoints && (
+              <div className="customer-points-card">
+                <div className="customer-points-header">
+                  <div className="customer-name">
+                    {customerPoints.firstName && customerPoints.lastName 
+                      ? `${customerPoints.firstName} ${customerPoints.lastName}` 
+                      : 'Customer'}
+                  </div>
+                  {customerPoints.vipTier && (
+                    <div>
+                      <span className="vip-badge-icon">🎖 Tier: </span>
+                      <span className="vip-badge">{customerPoints.vipTier}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="points-display">
+                  <div className="points-row">
+                    <span className="points-label">Available Points</span>
+                    <span className="points-value">{customerPoints.points}</span>
+                  </div>
+                  {customerPoints.credits > 0 && (
+                    <div className="points-row">
+                      <span className="points-label">Store Credits</span>
+                      <span className="credits-value">${customerPoints.credits}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="form-section">
