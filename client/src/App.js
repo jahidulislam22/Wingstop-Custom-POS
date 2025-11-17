@@ -216,7 +216,7 @@ function App() {
     <div className="App">
       <div className="pos-container">
         <div className="pos-header">
-          <h1>🛒 POS System</h1>
+          <h1>🛒 Wingstop Custom POS System</h1>
           <p className="subtitle">Rivo Points Redemption</p>
         </div>
 
