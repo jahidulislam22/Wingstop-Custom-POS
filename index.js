@@ -335,64 +335,168 @@ app.post('/notify-point-redemption', async (req, res) => {
       });
     }
     
-    const subject = 'Points Redeemed Successfully';
+    const subject = 'Your Wingstop Reward - Confirmation';
+    
     const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; color: #333; }
-            .container { max-width: 500px; margin: 0 auto; padding: 30px; }
-            h2 { color: #667eea; }
-            .points-info { background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0; }
-            .points-row { display: flex; justify-content: space-between; margin: 10px 0; }
-            .label { color: #666; }
-            .value { font-weight: bold; color: #667eea; }
-            .code-box { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; border: 2px dashed #ffc107; }
-            .code { font-size: 24px; font-weight: bold; color: #856404; letter-spacing: 2px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <h2>Congratulations ${customerName}!</h2>
-            <p>You've successfully redeemed <strong>${pointsRedeemed} points</strong> for <strong>${rewardName}</strong>.</p>
-            
-            ${rewardCode ? `
-            <div class="code-box">
-              <p style="margin: 0 0 10px 0; font-size: 14px; color: #856404;">Your Reward Code:</p>
-              <div class="code">${rewardCode}</div>
-            </div>
-            ` : ''}
-            
-            <div class="points-info">
-              <div class="points-row">
-                <span class="label">Points Redeemed:</span>
-                <span class="value">${pointsRedeemed}</span>
-              </div>
-              <div class="points-row">
-                <span class="label">Points Remaining:</span>
-                <span class="value">${pointsRemaining}</span>
-              </div>
-            </div>
-            
-            <p>Thank you!</p>
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+          }
+          .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          }
+          .header {
+            background: #2563eb;
+            padding: 30px;
+            text-align: center;
+            color: white;
+          }
+          .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+          }
+          .content {
+            padding: 40px 30px;
+          }
+          .greeting {
+            font-size: 16px;
+            margin-bottom: 24px;
+            color: #333;
+          }
+          .info-box {
+            background: #f9fafb;
+            border-left: 4px solid #2563eb;
+            padding: 20px;
+            margin: 24px 0;
+          }
+          .info-row {
+            margin: 12px 0;
+          }
+          .info-label {
+            font-weight: 600;
+            color: #555;
+          }
+          .info-value {
+            color: #2563eb;
+            font-weight: 600;
+            font-size: 16px;
+          }
+          .code-box {
+            background: #fff9e6;
+            border: 2px dashed #fbbf24;
+            padding: 20px;
+            text-align: center;
+            border-radius: 6px;
+            margin: 20px 0;
+          }
+          .code {
+            font-size: 24px;
+            font-weight: 700;
+            color: #92400e;
+            letter-spacing: 2px;
+            font-family: 'Courier New', monospace;
+          }
+          .footer {
+            background: #f9fafb;
+            padding: 24px 30px;
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+            border-top: 1px solid #e5e7eb;
+          }
+          @media only screen and (max-width: 600px) {
+            .container { margin: 20px; }
+            .content { padding: 30px 20px; }
+            .code { font-size: 20px; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Reward Confirmation</h1>
           </div>
-        </body>
-        </html>
-      `;
+          
+          <div class="content">
+            <p class="greeting">Hello ${customerName},</p>
+            <p>Your reward has been successfully redeemed!</p>
+            
+      <div class="info-box">
+        <div class="info-row">
+          <span class="info-label">Reward:</span>
+          <span class="info-value">${rewardName || 'Reward'}</span>
+        </div>
+        ${rewardCode ? `
+        <div class="code-box">
+          <div style="font-size: 12px; color: #92400e; margin-bottom: 8px; font-weight: 600;">DISCOUNT CODE</div>
+          <div class="code">${rewardCode}</div>
+        </div>
+        ` : `
+        <div class="info-row">
+          <span class="info-label">Status:</span>
+          <span class="info-value">Active</span>
+        </div>
+        `}
+        <div class="info-row">
+          <span class="info-label">Points Redeemed:</span>
+          <span class="info-value">${pointsRedeemed}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Points Remaining:</span>
+          <span class="info-value">${pointsRemaining}</span>
+        </div>
+      </div>
+            
+            <p style="color: #555; font-size: 14px;">
+              ${rewardCode ? 'Please use this code at checkout to redeem your reward.' : 'Your reward has been applied to your account.'}
+            </p>
+            
+            <p style="margin-top: 30px;">Thank you for choosing Wingstop.</p>
+          </div>
+          
+          <div class="footer">
+            <p style="margin: 0; font-weight: 600; color: #333;">Wingstop Team</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+    
     const text = `
-        Hi ${customerName},
+      Hello ${customerName},
 
-        You've successfully redeemed ${pointsRedeemed} points for ${rewardName}.
+      Your reward has been successfully redeemed!
 
-        ${rewardCode ? `Your Reward Code: ${rewardCode}\n` : ''}
-        Points Redeemed: ${pointsRedeemed}
-        Points Remaining: ${pointsRemaining}
+      Reward: ${rewardName || 'Reward'}
+      ${rewardCode ? `Discount Code: ${rewardCode}` : 'Status: Active'}
 
-        Thank you!
-      `;
+      ${rewardCode ? 'Please use this code at checkout to redeem your reward.' : 'Your reward has been applied to your account.'}
 
-    // Prefer Resend if configured (no SMTP). Otherwise fall back to SMTP.
+      Points Redeemed: ${pointsRedeemed}
+      Points Remaining: ${pointsRemaining}
+
+      Thank you for choosing Wingstop.
+
+      Best regards,
+      Wingstop Team
+    `;
+
     const resendFrom = `${config.EMAIL_FROM_NAME || 'Rivo Loyalty'} <${config.RESEND_FROM || 'onboarding@resend.dev'}>`;
     const resendResp = await sendEmailViaResend({ from: resendFrom, to: email, subject, html, text });
     console.log(`Email sent via Resend to ${email}`, { messageId: resendResp?.id || null });

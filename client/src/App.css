@@ -427,6 +427,13 @@
   color: #1a1a1a;
 }
 
+.vip-badge-icon {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 600;
+  margin-right: 4px;
+}
+
 .vip-badge {
   background: #2563eb;
   color: white;
