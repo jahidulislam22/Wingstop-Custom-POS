@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import wingstopLogo from './wingstop logo.png';
 
 function App() {
   const [customerEmail, setCustomerEmail] = useState('');
@@ -216,7 +217,8 @@ function App() {
     <div className="App">
       <div className="pos-container">
         <div className="pos-header">
-          <h1>🛒 Wingstop Custom POS System</h1>
+          <img src={wingstopLogo} alt="Wingstop Logo" className="wingstop-logo" style={{ width: '200px', marginBottom: '20px' }} />
+          <h1>My Wingstop</h1>
           <p className="subtitle">Rivo Points Redemption</p>
         </div>
 
