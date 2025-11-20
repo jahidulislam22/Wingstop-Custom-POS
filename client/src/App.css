@@ -482,6 +482,55 @@
   margin: 30px 0;
 }
 
+.points-earned-box {
+  background: linear-gradient(135deg, #e6f4ed 0%, #d1ebe0 100%);
+  border: 3px solid #006938;
+  border-radius: 12px;
+  padding: 30px;
+  margin: 30px 0;
+  text-align: center;
+}
+
+.points-earned-icon-large {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.points-earned-large {
+  font-size: 56px;
+  font-weight: 700;
+  color: #006938;
+  letter-spacing: -1px;
+  margin: 8px 0;
+  line-height: 1;
+}
+
+.points-earned-label {
+  font-size: 16px;
+  color: #004324;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 8px;
+}
+
+.info-box-success {
+  background: #f0fdf4;
+  border-left: 4px solid #006938;
+  padding: 16px 20px;
+  margin: 24px 0;
+  border-radius: 6px;
+  text-align: left;
+}
+
+.info-box-success strong {
+  color: #006938;
+}
+
+.highlight-green {
+  color: #006938 !important;
+}
+
 .code-label {
   font-size: 14px;
   color: #856404;
@@ -1203,5 +1252,26 @@
   .reward-code {
     font-size: 20px;
     letter-spacing: 1px;
+  }
+
+  .points-earned-box {
+    padding: 20px;
+  }
+
+  .points-earned-icon-large {
+    font-size: 40px;
+  }
+
+  .points-earned-large {
+    font-size: 48px;
+  }
+
+  .points-earned-label {
+    font-size: 14px;
+  }
+
+  .info-box-success {
+    padding: 12px 16px;
+    font-size: 13px;
   }
 }

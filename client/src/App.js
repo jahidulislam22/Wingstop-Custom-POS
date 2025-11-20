@@ -12,6 +12,7 @@ function App() {
   const [addToCartMessage, setAddToCartMessage] = useState(null);
   const [checkoutSuccess, setCheckoutSuccess] = useState(null);
   const [checkoutError, setCheckoutError] = useState(null);
+  const [checkoutResult, setCheckoutResult] = useState(null);
   
   // Redemption states (right column) - Independent
   const [redemptionEmail, setRedemptionEmail] = useState('');
@@ -109,6 +110,10 @@ function App() {
     setCustomerPoints(null);
   };
 
+  const closeCheckoutModal = () => {
+    setCheckoutResult(null);
+  };
+
   const handleAddToCart = () => {
     const existingItem = cart.find(item => item.id === product.id);
     
@@ -165,11 +170,19 @@ function App() {
       const data = await response.json();
 
       if (data.success) {
-        setCheckoutSuccess(`✓ Checkout completed! You earned ${pointsEarned} points! Check your email for details.`);
+        // Prepare checkout result for modal
+        setCheckoutResult({
+          items: cart,
+          totalItems: getTotalItems(),
+          totalPrice: getTotalPrice(),
+          pointsEarned: pointsEarned,
+          newPointsBalance: data.order?.newPointsBalance || null,
+          customerEmail: orderEmail,
+          orderNumber: data.order?.orderNumber || `ORD-${Date.now()}`,
+          timestamp: data.order?.timestamp || new Date().toISOString()
+        });
         setCart([]);
         setOrderEmail('');
-        // Auto-hide success message after 5 seconds
-        setTimeout(() => setCheckoutSuccess(null), 5000);
       } else {
         setCheckoutError(data.error || 'Failed to checkout');
       }
@@ -379,13 +392,6 @@ function App() {
                   />
                 </div>
 
-                {/* Checkout Success Message */}
-                {checkoutSuccess && (
-                  <div className="success-message">
-                    {checkoutSuccess}
-                  </div>
-                )}
-
                 {/* Checkout Error Message */}
                 {checkoutError && (
                   <div className="error-message">
@@ -582,6 +588,66 @@ function App() {
 
               <button className="reset-button" onClick={resetForm}>
                 Close & Redeem Another
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Checkout Success Modal */}
+      {checkoutResult && (
+        <div className="modal-overlay" onClick={closeCheckoutModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={closeCheckoutModal}>✕</button>
+            
+            <div className="success-screen">
+              <div className="success-icon">🎉</div>
+              <h2>Congratulations!</h2>
+              <p>Your order has been placed successfully</p>
+
+              <div className="points-earned-box">
+                <div className="points-earned-icon-large">🎁</div>
+                <div className="points-earned-large">+{checkoutResult.pointsEarned}</div>
+                <div className="points-earned-label">Points Earned</div>
+              </div>
+
+              <div className="redemption-details">
+                <div className="detail-row">
+                  <span>Order Number:</span>
+                  <strong>{checkoutResult.orderNumber}</strong>
+                </div>
+                <div className="detail-row">
+                  <span>Items Ordered:</span>
+                  <strong>{checkoutResult.totalItems} {checkoutResult.totalItems === 1 ? 'item' : 'items'}</strong>
+                </div>
+                <div className="detail-row">
+                  <span>Total Amount:</span>
+                  <strong>${checkoutResult.totalPrice}</strong>
+                </div>
+                <div className="detail-row">
+                  <span>Points Earned:</span>
+                  <strong className="highlight-green">{checkoutResult.pointsEarned} points</strong>
+                </div>
+                {checkoutResult.newPointsBalance !== null && (
+                  <div className="detail-row">
+                    <span>New Points Balance:</span>
+                    <strong className="highlight-green">{checkoutResult.newPointsBalance} points</strong>
+                  </div>
+                )}
+                <div className="detail-row">
+                  <span>Email:</span>
+                  <strong>{checkoutResult.customerEmail}</strong>
+                </div>
+              </div>
+
+              <div className="info-box-success">
+                <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.6' }}>
+                  📧 A confirmation email with your order details and points earned has been sent to <strong>{checkoutResult.customerEmail}</strong>
+                </p>
+              </div>
+
+              <button className="reset-button" onClick={closeCheckoutModal}>
+                Close & Continue Shopping
               </button>
             </div>
           </div>
