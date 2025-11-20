@@ -248,75 +248,6 @@ function App() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="App">
-        <div className="pos-container">
-          <div className="loading">Loading rewards...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (redemptionResult) {
-    return (
-      <div className="App">
-        <div className="pos-container">
-          <div className="success-screen">
-            <div className="success-icon">🎉</div>
-            <h2>Redemption Successful!</h2>
-            <p>Points have been redeemed from Rivo</p>
-
-            <div className="reward-code-box">
-              <div className="code-label">Discount Code</div>
-              <div className="reward-code">{redemptionResult.rewardCode || 'N/A'}</div>
-              <div className="code-hint">Use this code at checkout</div>
-            </div>
-
-            <div className="redemption-details">
-              <div className="detail-row">
-                <span>Reward:</span>
-                <strong>{redemptionResult.rewardName}</strong>
-              </div>
-              {redemptionResult.rewardValue && (
-                <div className="detail-row">
-                  <span>Value:</span>
-                  <strong>${redemptionResult.rewardValue} off</strong>
-                </div>
-              )}
-              <div className="detail-row">
-                <span>Points Redeemed:</span>
-                <strong>{redemptionResult.pointsRedeemed}</strong>
-              </div>
-              <div className="detail-row">
-                <span>Points Remaining:</span>
-                <strong>{redemptionResult.pointsRemaining}</strong>
-              </div>
-              {redemptionResult.vipTier && (
-                <div className="detail-row">
-                  <span>VIP Tier:</span>
-                  <strong>{redemptionResult.vipTier}</strong>
-                </div>
-              )}
-              <div className="detail-row">
-                <span>Customer:</span>
-                <strong>{redemptionResult.customerName || redemptionResult.customerEmail}</strong>
-              </div>
-              <div className="detail-row">
-                <span>Email:</span>
-                <strong>{redemptionResult.customerEmail}</strong>
-              </div>
-            </div>
-
-            <button className="reset-button" onClick={resetForm}>
-              Redeem Another Reward
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="App">
       <header className="app-header">
@@ -536,7 +467,9 @@ function App() {
 
           <div className="form-section">
             <label className="form-label">Select Reward</label>
-            {rewards.length === 0 ? (
+            {loading ? (
+              <div className="loading">Loading rewards...</div>
+            ) : rewards.length === 0 ? (
               <p className="no-rewards">No rewards available</p>
             ) : (
               <div className="rewards-grid">
@@ -555,6 +488,23 @@ function App() {
               </div>
             )}
           </div>
+
+          {selectedReward && (
+            <div className="pos-info">
+              <div className="info-row">
+                <span className="info-label">Selected Reward:</span>
+                <span className="info-value">{selectedReward.name}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Points Required:</span>
+                <span className="info-value">{selectedReward.points}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Customer Email:</span>
+                <span className="info-value">{redemptionEmail || 'Not entered'}</span>
+              </div>
+            </div>
+          )}
 
           {redemptionError && (
             <div className="error-message">
@@ -577,29 +527,66 @@ function App() {
           </button>
         </form>
 
-        {selectedReward && (
-          <div className="pos-info">
-            <div className="info-row">
-              <span className="info-label">Selected Reward:</span>
-              <span className="info-value">{selectedReward.name}</span>
-            </div>
-            <div className="info-row">
-              <span className="info-label">Points Required:</span>
-              <span className="info-value">{selectedReward.points}</span>
-            </div>
-            <div className="info-row">
-              <span className="info-label">Reward ID:</span>
-              <span className="info-value">{selectedReward.id}</span>
-            </div>
-            <div className="info-row">
-              <span className="info-label">Customer Email:</span>
-              <span className="info-value">{redemptionEmail || 'Not entered'}</span>
-            </div>
-          </div>
-        )}
+
           </div>
         </div>
       </div>
+
+      {/* Redemption Success Modal */}
+      {redemptionResult && (
+        <div className="modal-overlay" onClick={resetForm}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={resetForm}>✕</button>
+            
+            <div className="success-screen">
+              <div className="success-icon">🎉</div>
+              <h2>Redemption Successful!</h2>
+              <p>Points have been redeemed from Rivo</p>
+
+              <div className="reward-code-box">
+                <div className="code-label">Discount Code</div>
+                <div className="reward-code">{redemptionResult.rewardCode || 'N/A'}</div>
+                <div className="code-hint">Use this code at checkout</div>
+              </div>
+
+              <div className="redemption-details">
+                <div className="detail-row">
+                  <span>Reward:</span>
+                  <strong>{redemptionResult.rewardName}</strong>
+                </div>
+                {redemptionResult.rewardValue && (
+                  <div className="detail-row">
+                    <span>Value:</span>
+                    <strong>${redemptionResult.rewardValue} off</strong>
+                  </div>
+                )}
+                <div className="detail-row">
+                  <span>Points Redeemed:</span>
+                  <strong>{redemptionResult.pointsRedeemed}</strong>
+                </div>
+                {redemptionResult.vipTier && (
+                  <div className="detail-row">
+                    <span>VIP Tier:</span>
+                    <strong>{redemptionResult.vipTier}</strong>
+                  </div>
+                )}
+                <div className="detail-row">
+                  <span>Customer:</span>
+                  <strong>{redemptionResult.customerName || redemptionResult.customerEmail}</strong>
+                </div>
+                <div className="detail-row">
+                  <span>Email:</span>
+                  <strong>{redemptionResult.customerEmail}</strong>
+                </div>
+              </div>
+
+              <button className="reset-button" onClick={resetForm}>
+                Close & Redeem Another
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
