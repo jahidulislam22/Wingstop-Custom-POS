@@ -20,10 +20,36 @@ Header: Authorization: {api_key}
 Body:
 {
   "customer_identifier": "email@example.com",
-  "points": 100,
-  "reason": "POS Order POS001"
+  "points_amount": 100,
+  "action": "POS Purchase",
+  "description": "Order placed via POS - 2 item(s)"
 }
 ```
+
+**Required Fields:**
+- `customer_identifier`: Customer email or Shopify ID
+- `points_amount`: Number of points to award
+- `action`: Action name (e.g., "POS Purchase", "Admin Adjustment")
+- `description`: Optional description of the event
+
+**Note:** Using `action` field doesn't require pre-configured earning methods in Rivo app.
+If using `source` with `custom_action_name`, you must first create that earning method in the Rivo dashboard.
+
+## Email Notifications
+
+### Purchase Confirmation Email
+When a customer completes a purchase and earns points, an automated email is sent containing:
+- Order summary with items and total
+- Points earned notification
+- New points balance
+- Professional Wingstop branding
+
+**Requirements:**
+- `RESEND_API_KEY` must be configured
+- `RESEND_FROM` email address must be configured
+- `EMAIL_FROM_NAME` (optional, defaults to "Wingstop")
+
+The email is sent automatically after points are successfully added to the customer's Rivo account.
 
 ## Export Flow (export.js)
 

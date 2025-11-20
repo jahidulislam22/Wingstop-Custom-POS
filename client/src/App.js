@@ -1,18 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import wingstopLogo from './wingstop logo.png';
+import wingsBundle from './wings-bundle.avif';
 
 function App() {
-  const [customerEmail, setCustomerEmail] = useState('');
+  // Order/Cart states (left column) - Independent
+  const [orderEmail, setOrderEmail] = useState('');
+  const [cart, setCart] = useState([]);
+  const [quantity, setQuantity] = useState(1);
+  const [checkingOut, setCheckingOut] = useState(false);
+  const [addToCartMessage, setAddToCartMessage] = useState(null);
+  const [checkoutSuccess, setCheckoutSuccess] = useState(null);
+  const [checkoutError, setCheckoutError] = useState(null);
+  
+  // Redemption states (right column) - Independent
+  const [redemptionEmail, setRedemptionEmail] = useState('');
   const [selectedReward, setSelectedReward] = useState(null);
   const [rewards, setRewards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [message, setMessage] = useState(null);
-  const [error, setError] = useState(null);
+  const [redemptionMessage, setRedemptionMessage] = useState(null);
+  const [redemptionError, setRedemptionError] = useState(null);
   const [redemptionResult, setRedemptionResult] = useState(null);
   const [customerPoints, setCustomerPoints] = useState(null);
   const [loadingPoints, setLoadingPoints] = useState(false);
+
+  // Product data
+  const product = {
+    id: 'large-10-pc-wing-combo',
+    name: 'Large 10 pc Wing Combo',
+    description: '10 Boneless or Classic (Bone-In) wings with up to 2 flavours, regular fries or veggie sticks, 1 dip and a 16oz drink',
+    image: wingsBundle,
+    price: 16.99
+  };
 
   useEffect(() => {
     fetchRewards();
@@ -40,7 +60,7 @@ function App() {
       }
     } catch (err) {
       console.error('Error fetching rewards:', err);
-      setError('Failed to load rewards. Make sure backend is running.');
+      setRedemptionError('Failed to load rewards. Make sure backend is running.');
     } finally {
       setLoading(false);
     }
@@ -54,7 +74,7 @@ function App() {
 
     try {
       setLoadingPoints(true);
-      setError(null);
+      setRedemptionError(null);
       const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
       const response = await fetch(`${API_URL}/points/${encodeURIComponent(email)}`);
       const data = await response.json();
@@ -69,37 +89,121 @@ function App() {
         });
       } else {
         setCustomerPoints(null);
-        setError('Customer not found or no points data available');
+        setRedemptionError('Customer not found or no points data available');
       }
     } catch (err) {
       console.error('Error fetching customer points:', err);
       setCustomerPoints(null);
-      setError('Failed to fetch customer points');
+      setRedemptionError('Failed to fetch customer points');
     } finally {
       setLoadingPoints(false);
     }
   };
 
   const resetForm = () => {
-    setCustomerEmail('');
+    setRedemptionEmail('');
     setSelectedReward(null);
     setRedemptionResult(null);
-    setMessage(null);
-    setError(null);
+    setRedemptionMessage(null);
+    setRedemptionError(null);
     setCustomerPoints(null);
+  };
+
+  const handleAddToCart = () => {
+    const existingItem = cart.find(item => item.id === product.id);
+    
+    if (existingItem) {
+      setCart(cart.map(item => 
+        item.id === product.id 
+          ? { ...item, quantity: item.quantity + quantity }
+          : item
+      ));
+    } else {
+      setCart([...cart, { ...product, quantity }]);
+    }
+    
+    setAddToCartMessage('✓ Added to cart!');
+    setQuantity(1);
+    setTimeout(() => setAddToCartMessage(null), 2000);
+  };
+
+  const handleRemoveFromCart = (productId) => {
+    setCart(cart.filter(item => item.id !== productId));
+  };
+
+  const handleCheckout = async () => {
+    if (cart.length === 0) {
+      setCheckoutError('Cart is empty');
+      return;
+    }
+
+    if (!orderEmail) {
+      setCheckoutError('Please enter your email to earn points');
+      return;
+    }
+
+    setCheckingOut(true);
+    setCheckoutError(null);
+    setCheckoutSuccess(null);
+
+    const pointsEarned = getPointsEarned();
+
+    try {
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${API_URL}/checkout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          items: cart,
+          customerEmail: orderEmail,
+          pointsEarned: pointsEarned
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setCheckoutSuccess(`✓ Checkout completed! You earned ${pointsEarned} points! Check your email for details.`);
+        setCart([]);
+        setOrderEmail('');
+        // Auto-hide success message after 5 seconds
+        setTimeout(() => setCheckoutSuccess(null), 5000);
+      } else {
+        setCheckoutError(data.error || 'Failed to checkout');
+      }
+    } catch (err) {
+      setCheckoutError('Network error. Make sure the backend is running on port 5000.');
+    } finally {
+      setCheckingOut(false);
+    }
+  };
+
+  const getTotalPrice = () => {
+    return cart.reduce((total, item) => total + (item.price * item.quantity), 0).toFixed(2);
+  };
+
+  const getTotalItems = () => {
+    return cart.reduce((total, item) => total + item.quantity, 0);
+  };
+
+  const getPointsEarned = () => {
+    const totalQuantity = getTotalItems();
+    return totalQuantity * 50; // 50 points per item
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!customerEmail || !selectedReward) {
-      setError('Please enter email and select a reward');
+    if (!redemptionEmail || !selectedReward) {
+      setRedemptionError('Please enter email and select a reward');
       return;
     }
 
     setSubmitting(true);
-    setError(null);
-    setMessage(null);
+    setRedemptionError(null);
+    setRedemptionMessage(null);
     setRedemptionResult(null);
 
     try {
@@ -110,7 +214,7 @@ function App() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: customerEmail,
+          email: redemptionEmail,
           rewardId: selectedReward.id,
           rewardName: selectedReward.name,
           points: selectedReward.points
@@ -133,12 +237,12 @@ function App() {
           expiresAt: data.redemption?.expiresAt
         };
         setRedemptionResult(result);
-        setMessage('✓ Points redeemed successfully!');
+        setRedemptionMessage('✓ Points redeemed successfully!');
       } else {
-        setError(data.error || 'Failed to redeem points');
+        setRedemptionError(data.error || 'Failed to redeem points');
       }
     } catch (err) {
-      setError('Network error. Make sure the backend is running on port 5000.');
+      setRedemptionError('Network error. Make sure the backend is running on port 5000.');
     } finally {
       setSubmitting(false);
     }
@@ -215,14 +319,168 @@ function App() {
 
   return (
     <div className="App">
-      <div className="pos-container">
-        <div className="pos-header">
-          <img src={wingstopLogo} alt="Wingstop Logo" className="wingstop-logo" style={{ width: '200px', marginBottom: '20px' }} />
-          <h1>My Wingstop</h1>
-          <p className="subtitle">Rivo Points Redemption</p>
+      <header className="app-header">
+        <div className="header-container">
+          <div className="header-left">
+            <img src={wingstopLogo} alt="Wingstop Logo" className="header-logo" />
+            <div className="header-brand">
+              <h1 className="brand-name">My Wingstop</h1>
+              <p className="brand-tagline">Flavor You Crave, Rewards You Deserve</p>
+            </div>
+          </div>
+          <div className="header-right">
+            <div className="header-info">
+              <div className="info-item">
+                <span className="info-icon">🛒</span>
+                <span className="info-text">Order Now</span>
+              </div>
+              <div className="info-item">
+                <span className="info-icon">🎁</span>
+                <span className="info-text">Earn Rewards</span>
+              </div>
+              <div className="info-item">
+                <span className="info-icon">⚡</span>
+                <span className="info-text">50 pts per item</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="two-column-layout">
+        {/* Left Column - Product & Cart */}
+        <div className="left-column">
+          <div className="section-container">
+            <h2 className="section-title">🍗 Order Food</h2>
+            
+            {/* Product Section */}
+            <div className="product-section">
+              <div className="product-card">
+                <div className="product-image-container">
+                  <img src={product.image} alt={product.name} className="product-image" />
+                  <span className="product-badge">Most Popular!</span>
+                </div>
+                <div className="product-details">
+                  <h3 className="product-title">{product.name}</h3>
+                  <p className="product-description">{product.description}</p>
+                  <div className="product-price">${product.price}</div>
+                  
+                  {addToCartMessage && (
+                    <div className="success-message">
+                      {addToCartMessage}
+                    </div>
+                  )}
+                  
+                  <div className="product-actions">
+                    <div className="quantity-selector">
+                      <button 
+                        type="button" 
+                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                        className="quantity-btn"
+                      >
+                        -
+                      </button>
+                      <span className="quantity-display">{quantity}</span>
+                      <button 
+                        type="button" 
+                        onClick={() => setQuantity(quantity + 1)}
+                        className="quantity-btn"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={handleAddToCart}
+                      className="add-to-cart-btn"
+                    >
+                      Add to Cart
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Shopping Cart */}
+            {cart.length > 0 && (
+              <div className="cart-section">
+                <h2 className="cart-title">
+                  🛒 Shopping Cart ({getTotalItems()} {getTotalItems() === 1 ? 'item' : 'items'})
+                </h2>
+                <div className="cart-items">
+                  {cart.map((item) => (
+                    <div key={item.id} className="cart-item">
+                      <img src={item.image} alt={item.name} className="cart-item-image" />
+                      <div className="cart-item-details">
+                        <div className="cart-item-name">{item.name}</div>
+                        <div className="cart-item-quantity">Quantity: {item.quantity}</div>
+                      </div>
+                      <div className="cart-item-price">${(item.price * item.quantity).toFixed(2)}</div>
+                      <button 
+                        type="button"
+                        onClick={() => handleRemoveFromCart(item.id)}
+                        className="remove-btn"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div className="cart-total">
+                  <span className="cart-total-label">Total:</span>
+                  <span className="cart-total-price">${getTotalPrice()}</span>
+                </div>
+                <div className="points-earned-display">
+                  <span className="points-earned-icon">🎁</span>
+                  <span className="points-earned-text">You'll earn <strong>{getPointsEarned()} points</strong> with this order!</span>
+                </div>
+                
+                {/* Email Input for Checkout */}
+                <div className="checkout-email-section">
+                  <label className="form-label">Your Email (to earn points & receive confirmation)</label>
+                  <input
+                    type="email"
+                    placeholder="your@email.com"
+                    value={orderEmail}
+                    onChange={(e) => setOrderEmail(e.target.value)}
+                    className="pos-input"
+                    disabled={checkingOut}
+                  />
+                </div>
+
+                {/* Checkout Success Message */}
+                {checkoutSuccess && (
+                  <div className="success-message">
+                    {checkoutSuccess}
+                  </div>
+                )}
+
+                {/* Checkout Error Message */}
+                {checkoutError && (
+                  <div className="error-message">
+                    ❌ {checkoutError}
+                  </div>
+                )}
+                
+                <button
+                  type="button"
+                  onClick={handleCheckout}
+                  className="checkout-btn"
+                  disabled={checkingOut}
+                >
+                  {checkingOut ? 'Processing...' : 'Checkout'}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="pos-form">
+        {/* Right Column - POS Redemption */}
+        <div className="right-column">
+          <div className="section-container">
+            <h2 className="section-title">🎁 Redeem Points</h2>
+            
+            <form onSubmit={handleSubmit} className="pos-form">
           <div className="form-section">
             <label className="form-label">Customer Email</label>
             <div className="email-input-group">
@@ -230,17 +488,17 @@ function App() {
                 <input
                   type="email"
                   placeholder="customer@example.com"
-                  value={customerEmail}
-                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  value={redemptionEmail}
+                  onChange={(e) => setRedemptionEmail(e.target.value)}
                   className="pos-input"
                   required
                 />
               </div>
               <button
                 type="button"
-                onClick={() => fetchCustomerPoints(customerEmail)}
+                onClick={() => fetchCustomerPoints(redemptionEmail)}
                 className="check-points-btn"
-                disabled={loadingPoints || !customerEmail}
+                disabled={loadingPoints || !redemptionEmail}
               >
                 {loadingPoints ? '...' : 'Check Points'}
               </button>
@@ -298,22 +556,22 @@ function App() {
             )}
           </div>
 
-          {error && (
+          {redemptionError && (
             <div className="error-message">
-              ❌ {error}
+              ❌ {redemptionError}
             </div>
           )}
 
-          {message && (
+          {redemptionMessage && (
             <div className="success-message">
-              {message}
+              {redemptionMessage}
             </div>
           )}
 
           <button
             type="submit"
             className="submit-button"
-            disabled={submitting || !customerEmail || !selectedReward}
+            disabled={submitting || !redemptionEmail || !selectedReward}
           >
             {submitting ? 'Submitting...' : 'Submit'}
           </button>
@@ -335,10 +593,12 @@ function App() {
             </div>
             <div className="info-row">
               <span className="info-label">Customer Email:</span>
-              <span className="info-value">{customerEmail || 'Not entered'}</span>
+              <span className="info-value">{redemptionEmail || 'Not entered'}</span>
             </div>
           </div>
         )}
+          </div>
+        </div>
       </div>
     </div>
   );
